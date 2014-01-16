@@ -13,7 +13,7 @@
 </head>
 <body ng-controller="DiagramCtrl">
 	<div id="tables-panel">
-		<select ng-model="selectedSnapshot">
+		<select ng-model="selectedSnapshot" ng-change="onChangeSnapshot()">
 			<option value="">--select--</option>
 			<option ng-repeat="snapshot in snapshots" value="{{snapshot.name}}">{{snapshot.name}}</option>
 		</select>
@@ -22,7 +22,7 @@
 		</ul>
 	</div>
 	<div id="diagram-view">
-		<div ng-repeat="table in tables | filter:searchSelected" my-draggable="table" class="diagram-elem" ng-mousedown="selectTableView(table)" ng-class="{current: table.current, connected: table.connected}" ng-style="{left: table.x, top: table.y}">
+		<div ng-repeat="table in tables | filter:searchSelected" my-draggable="table" class="diagram-elem" ng-mousedown="selectTableView(table)" ng-class="{current: table.current, connected: table.isConnected()}" ng-style="{left: table.x, top: table.y}">
 			<div class="table-header">{{table.name}}</div>
 			<ul>
 				<li ng-repeat="column in table.columns">{{column.name}}</li>
@@ -30,7 +30,7 @@
 			<div class="menu-button" ng-click="contextMenu.openMenu(table, $event)" ng-mousedown="$event.stopPropagation()"></div>
 		</div>
 		<svg width="1000px" height="1000px">
-			<line ng-repeat="ref in viewableReferences()" ng-attr-x1="{{ref.x1}}" ng-attr-y1="{{ref.y1}}" ng-attr-x2="{{ref.x2}}" ng-attr-y2="{{ref.y2}}" ng-attr-stroke="{{ref.stroke}}"/>
+			<line ng-repeat="ref in viewableReferences()" ng-attr-x1="{{ref.x1}}" ng-attr-y1="{{ref.y1}}" ng-attr-x2="{{ref.x2}}" ng-attr-y2="{{ref.y2}}" ng-attr-stroke="{{ref.color()}}"/>
 		</svg>
 	</div>
 	<button ng-click="showStatus()">show status</button>

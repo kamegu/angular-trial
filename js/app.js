@@ -67,34 +67,20 @@ diagramApp.factory('ContextMenu', function(){
 
 diagramApp.controller('DiagramCtrl', ['$scope', '$http', '$filter', 'Table','Reference', 'Snapshot', 'ContextMenu', 
   function($scope, $http, $filter, Table, Reference, Snapshot, ContextMenu) {
-    $scope.snapshots = [];
+    $scope.snapshots = Snapshot.query();
     $scope.selectedSnapshot = '';
     $scope.tables = Table.query(function(){
       angular.forEach($scope.tables, function(table){
-        table.select = function(options){
-          table.selected = true;
-          if (options && options.autoIfNull === true) {
-            if (!table.x || !table.y) {
-              var pos = $('#diagram-view').searchEmptyArea(100, 100);
-              table.x = pos.x;
-              table.y = pos.y;
-            }
-          } else if (options && options.pos) {
-            table.x = options.pos.x || 10;
-            table.y = options.pos.y || 10;
-          }
-          $scope.selectTableView();
-        };
-        table.deselect = function() {
-          table.selected = false;
-          if (table.current) {
-            $scope.selectTableView({name: ''});
-          }
-          table.connected = false;
-        };
+        table.select = selectTable;
+        table.deselect = deselectTable;
+        table.isConnected = isConnectedTable;
       });
     });
-    $scope.references = Reference.query();
+    $scope.references = Reference.query(function(){
+      angular.forEach($scope.references, function(ref){
+        ref.color = referenceColor;
+      });
+    });
 
     $scope.clickTableLi = function(table) {
       table.selected = !table.selected;
@@ -108,26 +94,14 @@ diagramApp.controller('DiagramCtrl', ['$scope', '$http', '$filter', 'Table','Ref
       return !!table.selected;
     };
 
-    $scope.loadSelectedSnapshot = function() {
+    $scope.onChangeSnapshot = function() {
       var name = $scope.selectedSnapshot;
       if (!name) {
+        attachSnapshot();
         return;
       }
       Snapshot.query({snapshotName: name}, function(data){
-        var map = {};
-        angular.forEach(data, function(value, key){
-          map[value.name] = value;
-        });
-
-        angular.forEach($scope.tables, function(table, key){
-          var ss = map[table.name];
-          if (ss) {
-            table.select({pos: ss});
-          } else {
-            table.deselect();
-          }
-        });
-        $scope.selectTableView({name: ''});
+        attachSnapshot(data);
       });
     };
 
@@ -145,14 +119,6 @@ diagramApp.controller('DiagramCtrl', ['$scope', '$http', '$filter', 'Table','Ref
           reference.y1 = tbls[reference.table_name].y || 0;
           reference.x2 = tbls[reference.ref_table_name].x || 0;
           reference.y2 = tbls[reference.ref_table_name].y || 0;
-
-          if (reference.table_name === $scope.currentTableName) {
-            reference.stroke = '#f99';
-          } else if (reference.ref_table_name === $scope.currentTableName) {
-            reference.stroke = '#f99';
-          } else {
-            reference.stroke = 'black';
-          }
           refs.push(reference);
         }
       });
@@ -163,15 +129,6 @@ diagramApp.controller('DiagramCtrl', ['$scope', '$http', '$filter', 'Table','Ref
 
     $scope.selectTableView = function(obj) {
       obj = obj || {name: $scope.currentTableName};
-      var connected = [];
-      angular.forEach($scope.references, function(reference){
-        if (reference.table_name === obj.name) {
-          connected.push(reference.ref_table_name);
-        } else if (reference.ref_table_name === obj.name) {
-          connected.push(reference.table_name);
-        }
-      });
-
       $scope.currentTableName = null;
       angular.forEach($scope.tables, function(table){
         if (table.name === obj.name) {
@@ -180,15 +137,8 @@ diagramApp.controller('DiagramCtrl', ['$scope', '$http', '$filter', 'Table','Ref
         } else {
           table.current = false;
         }
-        table.connected = connected.indexOf(table.name) >= 0;
       });
     };
-
-    $scope.snapshots = Snapshot.query();
-
-    $scope.$watch('selectedSnapshot', function(){
-      $scope.loadSelectedSnapshot();
-    });
 
     $scope.contextMenu = new ContextMenu($scope);
 
@@ -206,6 +156,69 @@ diagramApp.controller('DiagramCtrl', ['$scope', '$http', '$filter', 'Table','Ref
         };
       }
       return null;
+    }
+
+    function selectTable(options) {
+      var table = this;
+      table.selected = true;
+      if (options && options.autoIfNull === true) {
+        if (table.x === undefined || table.y === undefined) {
+          var pos = $('#diagram-view').searchEmptyArea(100, 100);
+          table.x = pos.x;
+          table.y = pos.y;
+        }
+      } else if (options && options.pos) {
+        table.x = options.pos.x || 10;
+        table.y = options.pos.y || 10;
+      }
+      $scope.selectTableView();
+    }
+    function deselectTable() {
+      var table = this;
+      table.selected = false;
+      if (table.current) {
+        $scope.selectTableView({name: ''});
+      }
+    }
+    function isConnectedTable() {
+      var table = this;
+      for (var i = 0; i < $scope.references.length; i++) {
+        var reference = $scope.references[i];
+        if (reference.table_name === $scope.currentTableName 
+          && reference.ref_table_name === table.name) {
+          return true;
+        } else if (reference.ref_table_name === $scope.currentTableName
+          && reference.table_name === table.name) {
+          return true;
+        }
+      }
+      return false;
+    }
+    function referenceColor() {
+      var reference = this;
+      if (reference.table_name === $scope.currentTableName
+        || reference.ref_table_name === $scope.currentTableName) {
+        return '#f99';
+      } else {
+        return 'black';
+      }
+    }
+
+    function attachSnapshot(data) {
+      var map = {};
+      angular.forEach(data || [], function(value, key){
+        map[value.name] = value;
+      });
+
+      angular.forEach($scope.tables, function(table, key){
+        var ss = map[table.name];
+        if (ss) {
+          table.select({pos: ss});
+        } else {
+          table.deselect();
+        }
+      });
+      $scope.selectTableView({name: ''});
     }
   }
 ]);
