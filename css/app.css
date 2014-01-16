@@ -1,0 +1,85 @@
+#tables-panel {
+	width: 200px;
+}
+
+li.selected {
+	background: #9FF;
+}
+
+#diagram-view {
+	position: relative;
+	background: #eee;
+	width: 100%;
+	min-height: 80%;
+}
+
+div.diagram-elem {
+	position: absolute;
+	border: solid black 1px;
+	cursor: pointer;
+	padding: 2px 5px;
+	background-color: #cff;
+}
+
+div.diagram-elem.current {
+	border: 3px red solid;
+	margin-left: -1px;
+	margin-top: -1px;
+}
+
+div.diagram-elem.connected {
+	border: 3px #faa solid;
+	margin-left: -1px;
+	margin-top: -1px;
+}
+
+div.diagram-elem .table-header {
+	font-size: 120%;
+	font-weight: 700;
+	position: relative;
+	width: 100%;
+}
+
+div.diagram-elem .menu-button {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	width: 0;
+	height: 0;
+	border-left: 6px solid transparent;
+	border-right: 6px solid transparent;
+	border-top: 12px solid #F88;
+}
+
+div.diagram-elem ul {
+	list-style-type: none;
+	margin: 0px;
+	padding: 0px;
+}
+
+#context-menu {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: none;
+	padding: 0 2px;
+	border: 1px black solid;
+	background-color: #FFF;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+#context-menu ul {
+	list-style-type: none;
+	margin: 0px;
+	padding: 0px;
+	cursor: pointer;
+}
+
+#context-menu li:hover {
+	background-color: #DFF;
+}
+
+#context-menu.enable {
+	display: block;
+}
